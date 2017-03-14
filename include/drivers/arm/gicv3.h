@@ -409,6 +409,10 @@ void gicv3_set_spi_routing(unsigned int id, unsigned int irm,
 void gicv3_set_interrupt_pending(unsigned int id, unsigned int proc_num);
 void gicv3_clear_interrupt_pending(unsigned int id, unsigned int proc_num);
 unsigned int gicv3_set_pmr(unsigned int mask);
+void gicv3_irq_save(uintptr_t gicd_base);
+void gicv3_irq_restore(uintptr_t gicd_base);
+void gicv3_irq_pcpu_save(uintptr_t gicr_base, uint32_t proc_num);
+void gicv3_irq_pcpu_restore(uintptr_t gicr_base, uint32_t proc_num);
 
 #endif /* __ASSEMBLY__ */
 #endif /* __GICV3_H__ */

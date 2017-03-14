@@ -263,6 +263,26 @@ static inline void gicr_write_igroupr0(uintptr_t base, unsigned int val)
 	mmio_write_32(base + GICR_IGROUPR0, val);
 }
 
+static inline unsigned int gicr_read_isactiver0(uintptr_t base)
+{
+	return mmio_read_32(base + GICR_ISACTIVER0);
+}
+
+static inline void gicr_write_isactiver0(uintptr_t base, unsigned int val)
+{
+	mmio_write_32(base + GICR_ISACTIVER0, val);
+}
+
+static inline unsigned int gicr_read_icactiver0(uintptr_t base)
+{
+	return mmio_read_32(base + GICR_ICACTIVER0);
+}
+
+static inline void gicr_write_icactiver0(uintptr_t base, unsigned int val)
+{
+	mmio_write_32(base + GICR_ICACTIVER0, val);
+}
+
 static inline unsigned int gicr_read_igrpmodr0(uintptr_t base)
 {
 	return mmio_read_32(base + GICR_IGRPMODR0);
