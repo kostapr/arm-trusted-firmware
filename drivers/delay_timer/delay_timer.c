@@ -15,6 +15,30 @@
 static const timer_ops_t *timer_ops;
 
 /***********************************************************
+ * Get a timer value in microseconds. The driver must
+ * be initialized before calling this function.
+ ***********************************************************/
+uint32_t timer_value_get(void)
+{
+	assert(timer_ops != 0 &&
+		(timer_ops->clk_mult != 0) &&
+		(timer_ops->clk_div != 0) &&
+		(timer_ops->get_timer_value != 0));
+
+	return (~timer_ops->get_timer_value() *
+		timer_ops->clk_mult) / timer_ops->clk_div;
+}
+
+/***********************************************************
+ * Get a timer value in miliseconds. The driver must
+ * be initialized before calling this function.
+ ***********************************************************/
+uint32_t timer_value_ms_get(void)
+{
+	return timer_value_get() / 1000;
+}
+
+/***********************************************************
  * Delay for the given number of microseconds. The driver must
  * be initialized before calling this function.
  ***********************************************************/
