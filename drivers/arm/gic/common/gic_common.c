@@ -311,3 +311,13 @@ void gicd_set_icfgr(uintptr_t base, unsigned int id, unsigned int cfg)
 
 	gicd_write_icfgr(base, id, reg_val);
 }
+
+void gicd_write_sgir(uintptr_t base, unsigned int val)
+{
+	mmio_write_32(base + GICD_SGIR, val);
+}
+
+unsigned int gicd_read_sgir(uintptr_t base)
+{
+	return mmio_read_32(base + GICD_SGIR);
+}

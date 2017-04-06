@@ -53,11 +53,6 @@ static inline void gicd_set_itargetsr(uintptr_t base, unsigned int id,
 	mmio_write_8(base + GICD_ITARGETSR + id, target & GIC_TARGET_CPU_MASK);
 }
 
-static inline void gicd_write_sgir(uintptr_t base, unsigned int val)
-{
-	mmio_write_32(base + GICD_SGIR, val);
-}
-
 /*******************************************************************************
  * GIC CPU interface accessors for reading entire registers
  ******************************************************************************/
