@@ -53,6 +53,7 @@
 #define GICD_ISACTIVER		0x300
 #define GICD_ICACTIVER		0x380
 #define GICD_IPRIORITYR		0x400
+#define GICD_ITARGETSR		0x800
 #define GICD_ICFGR		0xc00
 #define GICD_NSACR		0xe00
 #define GICD_SGIR		0xf00
