@@ -38,6 +38,20 @@ include ${MAKE_HELPERS_DIRECTORY}defaults.mk
 ENABLE_ASSERTIONS		:= ${DEBUG}
 ENABLE_PMF			:= ${ENABLE_RUNTIME_INSTRUMENTATION}
 PLAT				:= ${DEFAULT_PLAT}
+# Enable compilation for Palladium emulation platform
+PALLADIUM			:= 0
+# flag to switch from PLL to ARO
+ARO_ENABLE			:= 0
+# Disable LLC in A8K family of SoCs
+LLC_DISABLE			:= 0
+# Make non-trusted image by default
+MARVELL_SECURE_BOOT	:= 	0
+# Enable end point only for 7040 PCAC
+
+# Marvell images
+BOOT_IMAGE			:= boot-image.bin
+BOOT_ENC_IMAGE			:= boot-image-enc.bin
+FLASH_IMAGE			:= flash-image.bin
 
 ################################################################################
 # Checkpatch script options
@@ -476,6 +490,41 @@ ifdef FDT_SOURCES
 NEED_FDT := yes
 endif
 
+#*********** A8K *************
+DOIMAGEPATH		?=	tools/doimage
+DOIMAGETOOL		?=	${DOIMAGEPATH}/doimage
+DOIMAGE_SEC     	:= 	${DOIMAGEPATH}/secure/sec_img_8K.cfg
+
+ifeq (${MARVELL_SECURE_BOOT},1)
+DOIMAGE_SEC_FLAGS := -c $(DOIMAGE_SEC)
+DOIMAGE_LIBS_CHECK = \
+        if ! [ -d "/usr/include/mbedtls" ]; then \
+                        echo "****************************************" >&2; \
+                        echo "Missing mbedTLS installation! " >&2; \
+                        echo "Please download it from \"tls.mbed.org\"" >&2; \
+			echo "Alternatively on Debian/Ubuntu system install" >&2; \
+			echo "\"libmbedtls-dev\" package" >&2; \
+                        echo "Make sure to use version 2.1.0 or later" >&2; \
+                        echo "****************************************" >&2; \
+                exit 1; \
+        else if ! [ -f "/usr/include/libconfig.h" ]; then \
+                        echo "********************************************************" >&2; \
+                        echo "Missing Libconfig installation!" >&2; \
+                        echo "Please download it from \"www.hyperrealm.com/libconfig/\"" >&2; \
+                        echo "Alternatively on Debian/Ubuntu system install packages" >&2; \
+                        echo "\"libconfig8\" and \"libconfig8-dev\"" >&2; \
+                        echo "********************************************************" >&2; \
+                exit 1; \
+        fi \
+        fi
+else #MARVELL_SECURE_BOOT
+DOIMAGE_LIBS_CHECK =
+DOIMAGE_SEC_FLAGS =
+endif #MARVELL_SECURE_BOOT
+
+ROM_BIN_EXT ?= $(BUILD_PLAT)/ble.bin
+DOIMAGE_FLAGS	+= -b $(ROM_BIN_EXT) $(NAND_DOIMAGE_FLAGS) $(DOIMAGE_SEC_FLAGS)
+
 ################################################################################
 # Build options checks
 ################################################################################
@@ -517,6 +566,9 @@ $(eval $(call assert_boolean,BL2_AT_EL3))
 
 $(eval $(call assert_numeric,ARM_ARCH_MAJOR))
 $(eval $(call assert_numeric,ARM_ARCH_MINOR))
+
+$(eval $(call assert_boolean,MARVELL_SECURE_BOOT))
+$(eval $(call assert_boolean,PCI_EP_SUPPORT))
 
 ################################################################################
 # Add definitions to the cpp preprocessor based on the current build options.
@@ -577,6 +629,19 @@ ifeq (${ARCH},aarch32)
 else
         $(eval $(call add_define,AARCH64))
 endif
+$(eval $(call add_define,PALLADIUM))
+$(eval $(call add_define,LLC_DISABLE))
+$(eval $(call add_define,PCI_EP_SUPPORT))
+$(eval $(call add_define,CP_NUM))
+
+################################################################################
+# Include BL specific makefiles
+################################################################################
+
+ifdef BLE_SOURCES
+NEED_BLE := yes
+include ble/ble.mk
+endif
 
 ################################################################################
 # Build targets
@@ -596,6 +661,10 @@ ifeq (${ERROR_DEPRECATED},0)
 endif
 
 # Expand build macros for the different images
+ifeq (${NEED_BLE},yes)
+$(if ${BLE}, ,$(eval $(call MAKE_BL,e)))
+endif
+
 ifeq (${NEED_BL1},yes)
 $(eval $(call MAKE_BL,1))
 endif
@@ -739,7 +808,14 @@ ${BUILD_PLAT}/${FWU_FIP_NAME}: ${FWU_FIP_DEPS} ${FIPTOOL}
 	@${ECHO_BLANK_LINE}
 
 fiptool: ${FIPTOOL}
+ifeq (${CALL_DOIMAGE}, y)
+fip: ${BUILD_PLAT}/${FIP_NAME} ${DOIMAGETOOL} ${BUILD_PLAT}/ble.bin
+	$(shell truncate -s %128K ${BUILD_PLAT}/bl1.bin)
+	$(shell cat ${BUILD_PLAT}/bl1.bin ${BUILD_PLAT}/${FIP_NAME} > ${BUILD_PLAT}/${BOOT_IMAGE})
+	${DOIMAGETOOL} ${DOIMAGE_FLAGS} ${BUILD_PLAT}/${BOOT_IMAGE} ${BUILD_PLAT}/${FLASH_IMAGE}
+else
 fip: ${BUILD_PLAT}/${FIP_NAME}
+endif
 fwu_fip: ${BUILD_PLAT}/${FWU_FIP_NAME}
 
 .PHONY: ${FIPTOOL}
