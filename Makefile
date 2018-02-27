@@ -47,6 +47,14 @@ LLC_DISABLE			:= 0
 # Make non-trusted image by default
 MARVELL_SECURE_BOOT	:= 	0
 # Enable end point only for 7040 PCAC
+ifeq ($(PLAT),$(filter $(PLAT),a70x0_pcac))
+PCI_EP_SUPPORT			:= 1
+else
+PCI_EP_SUPPORT			:= 0
+endif
+ifeq ($(PLAT),$(filter $(PLAT),a80x0_ocp))
+PCI_EP_SUPPORT			:= 1
+endif
 
 # Marvell images
 BOOT_IMAGE			:= boot-image.bin
@@ -493,7 +501,12 @@ endif
 #*********** A8K *************
 DOIMAGEPATH		?=	tools/doimage
 DOIMAGETOOL		?=	${DOIMAGEPATH}/doimage
+
+ifeq ($(findstring a80x0,${PLAT}),)
+DOIMAGE_SEC     	:= 	${DOIMAGEPATH}/secure/sec_img_7K.cfg
+else
 DOIMAGE_SEC     	:= 	${DOIMAGEPATH}/secure/sec_img_8K.cfg
+endif # PLAT == a8K/a7K
 
 ifeq (${MARVELL_SECURE_BOOT},1)
 DOIMAGE_SEC_FLAGS := -c $(DOIMAGE_SEC)
